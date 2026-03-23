@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <string.h>
 
 char* get_protocol_name(int protocol){
     switch(protocol){
@@ -18,7 +19,25 @@ char* get_protocol_name(int protocol){
     }
 }
 
-int main(){
+int get_protocol_number(char *name){
+    if(strcmp(name , "tcp") == 0) return 6;
+    if(strcmp(name, "udp") == 0) return 17;
+    if(strcmp(name, "icmp") == 0) return 1;
+    if(strcmp(name, "all") == 0) return -1;
+    return -2; // invalid 
+}
+
+int main(int argc, char * argv[]){
+
+    int filter_protocol = -1;
+    if(argc == 3 && strcmp(argv[1], "--protocol") == 0){
+        filter_protocol = get_protocol_number(argv[2]);
+
+        if(filter_protocol == -2){
+            printf("Invalid protocol. Use tcp/udp/icmp/all\n");
+        }
+    }
+
     printf("Packet Sniffer Started\n");
 
     int sockfd;
@@ -33,8 +52,6 @@ int main(){
     printf("Raw Socket Created\n");
 
     char buffer[65536];
-
-     int filter_protocol = 1;
 
     while(1){
         int data_size;
