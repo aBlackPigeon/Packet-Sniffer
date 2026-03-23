@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
 
 char* get_protocol_name(int protocol){
     switch(protocol){
@@ -38,6 +39,8 @@ int main(int argc, char * argv[]){
         }
     }
 
+    long packet_count = 0;
+
     printf("Packet Sniffer Started\n");
 
     int sockfd;
@@ -54,6 +57,7 @@ int main(int argc, char * argv[]){
     char buffer[65536];
 
     while(1){
+        packet_count++;
         int data_size;
         data_size = recvfrom(sockfd,buffer,sizeof(buffer),0,NULL,NULL);
         if(data_size < 0){
@@ -77,16 +81,35 @@ int main(int argc, char * argv[]){
         char *payload = buffer + ip_header_len;
 
         int payload_size = data_size - ip_header_len;
+
+        // get current time
+        time_t now;
+        struct tm *local_time;
+
+        time(&now);
+        local_time = localtime(&now);
+
+        char time_str[20];
+        strftime(time_str,sizeof(time_str), "%H:%M:%S", local_time);
+
+        // better logging
+        printf("[%s] %s | %s -> %s | TTL=%d | Len=%d | Count=%ld\n",
+        time_str,get_protocol_name(ip->protocol),
+        inet_ntoa(src.sin_addr),
+        inet_ntoa(dest.sin_addr),
+        ip->ttl,
+        ntohs(ip->tot_len),
+        packet_count);
         
-        printf("\nPacket Captured\n");
-        printf("\n");
-        printf("Source Ip : %s\n", inet_ntoa(src.sin_addr));
-        printf("Destination Ip : %s\n", inet_ntoa(dest.sin_addr));
-        printf("Protocol : %s\n", get_protocol_name(ip->protocol));
-        printf("TTL : %d\n", ip->ttl);
-        printf("Total Length : %d\n" , ntohs(ip->tot_len));
-        printf("Payload Size : %d\n", payload_size);
-        printf("Payload Data : ");
+        // printf("\nPacket Captured\n");
+        // printf("\n");
+        // printf("Source Ip : %s\n", inet_ntoa(src.sin_addr));
+        // printf("Destination Ip : %s\n", inet_ntoa(dest.sin_addr));
+        // printf("Protocol : %s\n", get_protocol_name(ip->protocol));
+        // printf("TTL : %d\n", ip->ttl);
+        // printf("Total Length : %d\n" , ntohs(ip->tot_len));
+        // printf("Payload Size : %d\n", payload_size);
+        // printf("Payload Data : ");
         for(int i = 0;i<payload_size && i < 20;i++){
             printf("%02X " , (unsigned char)payload[i]);
         }
