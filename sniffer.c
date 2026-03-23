@@ -34,6 +34,8 @@ int main(){
 
     char buffer[65536];
 
+     int filter_protocol = 1;
+
     while(1){
         int data_size;
         data_size = recvfrom(sockfd,buffer,sizeof(buffer),0,NULL,NULL);
@@ -46,6 +48,10 @@ int main(){
 
         struct iphdr *ip = (struct iphdr*) buffer;
         struct sockaddr_in src,dest;
+
+        if(filter_protocol != -1 && ip->protocol != filter_protocol){
+            continue;
+        }
 
         src.sin_addr.s_addr = ip->saddr;
         dest.sin_addr.s_addr = ip->daddr;
